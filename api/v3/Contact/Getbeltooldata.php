@@ -8,7 +8,7 @@ function _civicrm_api3_contact_getbeltooldata_params() {
   return [
     'contact_id'            => ['api.required' => 0, 'name' => 'contact_id',
                                 'title' => 'Contact ID (int)', 'type' => CRM_Utils_Type::T_INT],
-    'group'              => ['api.required' => 0, 'name' => 'group',
+    'group'              => ['api.required' => 1, 'name' => 'group',
                                 'title' => 'Group', 'type' => CRM_Utils_Type::T_INT,
                                 'pseudoconstant' => array(
                                     'table' => 'civicrm_group',
@@ -61,6 +61,12 @@ function civicrm_api3_contact_getbeltooldata($params) {
   if (isset($params['group_contact_id_offset'])) {
     if (empty($params['group'])) {
       return civicrm_api3_create_error('Cannot set group contact id offset when no groups are set.');
+    }
+  }
+
+  if ($params['get_count']) {
+    if (!empty($params['options'])) {
+      return civicrm_api3_create_error('Do not set options when counting contacts found.');
     }
   }
 

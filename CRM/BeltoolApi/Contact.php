@@ -65,7 +65,7 @@ TABLES;
 
     // Only return count.
     if ($params['get_count'] == 1) {
-      $selectFields = "COUNT(*) count";
+      $selectFields = "COUNT(DISTINCT(contact.id)) count";
       $joinTables = '';
       $orderFields = "ORDER BY civicrm_group_contact.id ASC, contact.id ASC LIMIT {$params['options']['offset']},{$params['options']['limit']}";
       $groupBy = '';
