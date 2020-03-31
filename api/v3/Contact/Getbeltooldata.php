@@ -16,7 +16,7 @@ function _civicrm_api3_contact_getbeltooldata_params() {
                                     'labelColumn' => 'title'
                                 )],
     'get_count' => ['api.required' => 0, 'name' => 'get_count',
-                                 'title' => 'Only count number of results', 'type' => CRM_Utils_Type::T_BOOLEAN],
+                                 'title' => 'Count contacts', 'type' => CRM_Utils_Type::T_BOOLEAN],
     'group_contact_id_offset' => ['api.required' => 0, 'name' => 'group_contact_id_offset',
                                  'title' => 'Group contact id offset', 'type' => CRM_Utils_Type::T_INT],
   ];

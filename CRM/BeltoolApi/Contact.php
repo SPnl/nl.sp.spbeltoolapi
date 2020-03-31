@@ -35,39 +35,55 @@ class CRM_BeltoolApi_Contact {
     }
 
     if (!empty($params['group_contact_id_offset'])) {
-      //$whereClause = " civicrm_group_contact.id > " . (int)$params['group_contact_id_offset'] . " AND " . $whereClause;
+      $whereClause = " civicrm_group_contact.id > " . (int)$params['group_contact_id_offset'] . " AND " . $whereClause;
     }
 
     // Other data used to enrich this export
     $genderCodes = \CRM_Core_PseudoConstant::get('CRM_Contact_DAO_Contact', 'gender_id');
     $spGeoNames = static::getSPGeostelselNames();
 
-    // Execute contact query (civicrm_contact and all data that is tied directly to a single civicrm_contact record))
-    $query = <<<SQL
-SELECT
+    $selectFields = <<<FIELDS
   contact.id AS contact_id, first_name, middle_name, last_name, display_name, gender_id, birth_date, do_not_mail, do_not_phone, do_not_email, do_not_sms, is_opt_out,
   caddr.postal_code,
-  cphone.phone AS phone, cmobile.phone AS mobile, cemail.email AS email,
+  cphone.phone_numeric AS phone, cmobile.phone_numeric AS mobile, cemail.email AS email,
   country.name AS country_name, country.iso_code AS country_code,
   geostelsel.afdeling AS afdeling_code, geostelsel.regio AS regio_code, geostelsel.provincie AS provincie_code,
   civicrm_group_contact.id AS group_contact_id
-  FROM civicrm_contact contact
-  LEFT JOIN civicrm_group_contact `civicrm_group_contact-ACL` ON contact.id = `civicrm_group_contact-ACL`.contact_id
-  LEFT JOIN civicrm_membership membership_access ON contact.id = membership_access.contact_id
-  LEFT JOIN civicrm_value_geostelsel geostelsel ON contact.id = geostelsel.entity_id
-  LEFT JOIN civicrm_value_migratie_1 cmigr ON contact.id = cmigr.entity_id
-  LEFT JOIN civicrm_address caddr ON contact.id = caddr.contact_id AND caddr.is_primary = 1
-  LEFT JOIN civicrm_country country ON caddr.country_id = country.id
-  LEFT JOIN civicrm_value_adresgegevens_12 caddrx ON caddr.id = caddrx.entity_id
+FIELDS;
+
+    $joinTables = <<<TABLES
   LEFT JOIN civicrm_phone cphone ON contact.id = cphone.contact_id AND cphone.phone_type_id = 1
   LEFT JOIN civicrm_phone cmobile ON contact.id = cmobile.contact_id AND cmobile.phone_type_id = 2
+  LEFT JOIN civicrm_value_geostelsel geostelsel ON contact.id = geostelsel.entity_id
+  LEFT JOIN civicrm_address caddr ON contact.id = caddr.contact_id AND caddr.is_primary = 1
+  LEFT JOIN civicrm_country country ON caddr.country_id = country.id
   LEFT JOIN civicrm_email cemail ON contact.id = cemail.contact_id AND cemail.is_primary = 1
+TABLES;
+
+    $orderFields = "ORDER BY civicrm_group_contact.id ASC, cphone.id DESC, cmobile.id DESC, cemail.id DESC, caddr.id DESC, contact.id ASC LIMIT {$params['options']['offset']},{$params['options']['limit']}";
+    $groupBy = "GROUP BY contact.id";
+
+    // Only return count.
+    if ($params['get_count'] == 1) {
+      $selectFields = "COUNT(*) count";
+      $joinTables = '';
+      $orderFields = "ORDER BY civicrm_group_contact.id ASC, contact.id ASC LIMIT {$params['options']['offset']},{$params['options']['limit']}";
+      $groupBy = '';
+    }
+
+    // Execute contact query (civicrm_contact and all data that is tied directly to a single civicrm_contact record))
+    $query = <<<SQL
+SELECT
+  {$selectFields}
+  FROM civicrm_contact contact
+  INNER JOIN civicrm_phone phone ON contact.id = phone.contact_id AND phone.phone_numeric IS NOT NULL
+  {$joinTables}
   {$groupJoin}
-  WHERE {$whereClause}
-  ORDER BY civicrm_group_contact.id ASC, contact.id ASC LIMIT {$params['options']['offset']},{$params['options']['limit']}
+  WHERE do_not_phone = 0 AND {$whereClause}
+  {$groupBy}
+  {$orderFields}
 SQL;
 
-print($query);
     // return civicrm_api3_create_error(['query' => $query]);
     $cres = \CRM_Core_DAO::executeQuery($query);
 
@@ -82,10 +98,12 @@ print($query);
       $contact = static::daoToArray($cres);
 
       // Enrich contact data
-      $contact['afdeling'] = $spGeoNames[$contact['afdeling_code']];
-      $contact['regio'] = $spGeoNames[$contact['regio_code']];
-      $contact['provincie'] = $spGeoNames[$contact['provincie_code']];
-      $contact['gender'] = $genderCodes[$contact['gender_id']];
+      if (!$params['get_count']) {
+        $contact['afdeling'] = $spGeoNames[$contact['afdeling_code']];
+        $contact['regio'] = $spGeoNames[$contact['regio_code']];
+        $contact['provincie'] = $spGeoNames[$contact['provincie_code']];
+        $contact['gender'] = $genderCodes[$contact['gender_id']];
+      }
 
       // Add to contacts and cids array
       $contacts[$cres->contact_id] = $contact;
