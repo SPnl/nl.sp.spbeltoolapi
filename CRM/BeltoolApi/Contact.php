@@ -124,7 +124,7 @@ SQL;
    * @param array $permissions API permissions array
    */
   public static function alterAPIPermissions(&$permissions = []) {
-    $permissions['contact']['getbeltooldata'] = ['view all contacts'];
+    $permissions['contact']['getbeltooldata'] = ['administer CiviCRM'];
   }
 
   /**
