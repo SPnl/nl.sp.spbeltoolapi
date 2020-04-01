@@ -79,7 +79,8 @@ SELECT
   INNER JOIN civicrm_phone phone ON contact.id = phone.contact_id AND phone.phone_numeric IS NOT NULL
   {$joinTables}
   {$groupJoin}
-  WHERE do_not_phone = 0 AND {$whereClause}
+  WHERE
+  {$whereClause}
   {$groupBy}
   {$orderFields}
 SQL;
