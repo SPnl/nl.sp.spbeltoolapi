@@ -48,9 +48,18 @@ function civicrm_api3_contact_getbeltooldata($params) {
   // Parse booleans and options
   $params['get_count'] = ($params['get_count'] == 1);
   $params['group_contact_id_offset'] = !empty($params['group_contact_id_offset']) ? (int) $params['group_contact_id_offset'] : 0;
-  $params['options']['limit'] = !empty($params['options']['limit']) ? (int) $params['options']['limit'] : 25;
-  $params['options']['offset'] = !empty($params['options']['offset']) ? (int) $params['options']['offset'] : 0;
 
+  // Check if options are set on get count, if so, error.
+  if (empty($params['get_count'])) {
+    $params['options']['limit'] = !empty($params['options']['limit']) ? (int) $params['options']['limit'] : 25;
+    $params['options']['offset'] = !empty($params['options']['offset']) ? (int) $params['options']['offset'] : 0;
+  }
+  else if (!empty($params['options'])) {
+    unset($params['options']);
+    return civicrm_api3_create_error('Do not set options when counting contacts found.');
+  }
+
+  // Validate contact id.
   if(isset($params['contact_id'])) {
     if(is_array($params['contact_id']) || !is_numeric($params['contact_id'])) {
       return civicrm_api3_create_error('Invalid parameter: contact_id is not a number.');
@@ -58,15 +67,10 @@ function civicrm_api3_contact_getbeltooldata($params) {
     $params['contact_id'] = (int)$params['contact_id'];
   }
 
+  // Check if group is set when group contact id offset is given.
   if (isset($params['group_contact_id_offset'])) {
     if (empty($params['group'])) {
       return civicrm_api3_create_error('Cannot set group contact id offset when no groups are set.');
-    }
-  }
-
-  if ($params['get_count']) {
-    if (!empty($params['options'])) {
-      return civicrm_api3_create_error('Do not set options when counting contacts found.');
     }
   }
 
