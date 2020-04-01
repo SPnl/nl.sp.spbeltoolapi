@@ -44,7 +44,7 @@ class CRM_BeltoolApi_Contact {
 
     $selectFields = <<<FIELDS
   contact.id AS contact_id, first_name, middle_name, last_name, display_name, gender_id, birth_date, do_not_mail, do_not_phone, do_not_email, do_not_sms, is_opt_out,
-  caddr.postal_code,
+  caddr.street_address, caddr.postal_code, caddr.city,
   cphone.phone_numeric AS phone, cmobile.phone_numeric AS mobile, cemail.email AS email,
   country.name AS country_name, country.iso_code AS country_code,
   geostelsel.afdeling AS afdeling_code, geostelsel.regio AS regio_code, geostelsel.provincie AS provincie_code,
